@@ -1,0 +1,11 @@
+# OpenCV is used only for a small, very stable API surface:
+#   - cv2.VideoCapture(path) + .isOpened()/.get()/.set()/.grab()/.read()/.release()
+#   - cv2.CAP_PROP_FPS / FRAME_WIDTH / FRAME_HEIGHT / FRAME_COUNT / POS_FRAMES
+#   - cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+# These have been stable since OpenCV 4.x. We accept any 4.9+ release so
+# the project stays compatible with environments that already have a
+# specific OpenCV version installed (e.g. 4.11.0.86) and would break
+# unrelated packages if forced to upgrade to 4.12.x.
+opencv-python>=4.9.0.80
+imageio-ffmpeg~=0.6.0
+Pillow>=9.1.0

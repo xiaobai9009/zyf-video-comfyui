@@ -1,0 +1,24 @@
+[project]
+name = "comfyui-zyf-video"
+description = "zyf-video: 视频加载、信息解包与保存节点 for ComfyUI."
+version = "2.0.0"
+license = { file = "LICENSE" }
+dependencies = [
+    # OpenCV is used only for a small, very stable API surface (see
+    # requirements.txt for details). We accept any 4.9+ release so
+    # the project stays compatible with environments that already have
+    # a specific OpenCV version installed (e.g. 4.11.0.86) and would
+    # break unrelated packages if forced to upgrade to 4.12.x.
+    "opencv-python>=4.9.0.80",
+    "imageio-ffmpeg~=0.6.0",
+    "Pillow>=9.1.0",
+]
+
+[project.urls]
+Repository = "https://github.com/dunklehohle/zyf-video"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = "zyf"
+DisplayName = "zyf-video"
+Icon = ""

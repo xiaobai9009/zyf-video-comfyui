@@ -1,0 +1,922 @@
+.player-controls-container {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    background: rgba(24, 26, 30, 0.9);
+    border-radius: 4px;
+    padding: 1px 3px;
+    box-sizing: border-box;
+}
+
+.player-grid-container {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-auto-rows: 1fr;
+    justify-content: stretch;
+    align-content: stretch;
+    gap: 2px;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.player-grid-container > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    cursor: pointer;
+}
+
+.player-grid-item {
+    text-align: center;
+    width: 75%;
+    height: 75%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* Drop target highlight when the user drags a video file onto the
+ * preview area. The widget root element gets the .zyf-drop-target
+ * class while a file is hovering above it. */
+.zyf-drop-target {
+    outline: 2px dashed rgba(120, 200, 255, 0.7);
+    outline-offset: 2px;
+    background-color: rgba(120, 200, 255, 0.06);
+    transition: background-color 0.1s ease-in;
+}
+
+.zyf-drop-target::after {
+    content: "Drop video to load";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(220, 235, 250, 0.9);
+    background: rgba(20, 26, 32, 0.85);
+    border: 1px solid rgba(120, 200, 255, 0.6);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 50;
+}
+
+.video-loading-overlay-container {
+    position: absolute;
+    display: block;
+    top: 0px;
+    bottom: 4px;
+    left: 0px;
+    z-index: 100;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.0);
+    pointer-events: auto;
+}
+
+.video-loading-overlay {
+    position: absolute;
+    display: block;
+    top: 0px;
+    bottom: 4px;
+    left: 0px;
+    z-index: 9999;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    visibility: hidden;
+}
+
+.video-loading-spinner {
+    position: relative;
+    text-align: center;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: Tahoma, sans-serif;
+    font-size: 120%;
+}
+
+.zyf-loader-text {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #e6e8ec;
+}
+
+/* =========================================================================
+ * Freeform crop overlay
+ * ========================================================================= */
+/* Crop toggle button — crop-with-arrow line icon.
+ * Transparent by default so the icon stays visible but the button does
+ * not visually obstruct the video; hover / focus / crop-open states
+ * show a solid dark-gray background. The icon is a white-stroked SVG
+ * so it stands out on the dark video frame. */
+.zyf-crop-toggle {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    z-index: 151;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    padding: 0;
+    background: transparent;
+    color: #e6e8ec;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.15s, border-color 0.15s;
+    box-sizing: border-box;
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zyf-crop-toggle .zyf-crop-toggle-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+}
+
+.zyf-crop-toggle .zyf-crop-toggle-icon svg {
+    width: 16px;
+    height: 16px;
+    stroke: #ffffff;
+    stroke-width: 1.8;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    display: block;
+}
+
+.zyf-crop-toggle:hover {
+    background: rgba(10, 14, 20, 0.85);
+    border-color: rgba(56, 189, 248, 0.8);
+}
+
+.zyf-crop-toggle:focus {
+    outline: none;
+    background: rgba(10, 14, 20, 0.85);
+    border-color: rgba(56, 189, 248, 0.8);
+}
+
+.zyf-crop-toggle.active {
+    background: rgba(56, 189, 248, 0.9);
+    border-color: rgba(56, 189, 248, 1);
+}
+
+/* "Reset to original" button — line-style ↺ icon shown to the LEFT of
+ * the crop toggle while the crop editor is open. Transparent by default;
+ * hover / focus states show a solid dark-gray background. Clicking it
+ * restores cx=0, cy=0, cw=1, ch=1. */
+.zyf-crop-reset {
+    position: absolute;
+    top: 5px;
+    /* The crop toggle is at right:5px and is 22px wide; the reset
+     * button sits 3px to its left, so its right edge is at 5+22+3 = 30px. */
+    right: 30px;
+    z-index: 151;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    padding: 0;
+    background: transparent;
+    color: #e6e8ec;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.15s, border-color 0.15s;
+    box-sizing: border-box;
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zyf-crop-reset .zyf-crop-reset-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+}
+
+.zyf-crop-reset .zyf-crop-reset-icon svg {
+    width: 16px;
+    height: 16px;
+    stroke: #ffffff;
+    stroke-width: 1.8;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    display: block;
+}
+
+.zyf-crop-reset:hover {
+    background: rgba(10, 14, 20, 0.85);
+    border-color: rgba(56, 189, 248, 0.8);
+}
+
+.zyf-crop-reset:focus {
+    outline: none;
+    background: rgba(10, 14, 20, 0.85);
+    border-color: rgba(56, 189, 248, 0.8);
+}
+
+.zyf-crop-reset:active {
+    background: rgba(56, 189, 248, 0.9);
+    border-color: rgba(56, 189, 248, 1);
+}
+
+.zyf-crop-toolbar {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right: 55px;            /* leaves room for 22px reset + 3px + 22px scissors + 3px + 5px breathing */
+    z-index: 151;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 5px;
+    background: rgba(10, 14, 20, 0.78);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 3px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    max-width: calc(100% - 60px);
+    box-sizing: border-box;
+    pointer-events: auto;
+    height: 22px;
+}
+
+/* Compact "current crop size" badge shown to the LEFT of the scissors
+ * toggle when the overlay is CLOSED and a real crop is applied. Shows
+ * "WxH" (e.g. "1024×576") in the same blue as the crop box. Hidden
+ * when the crop is "Full" (no crop applied) and hidden when the crop
+ * editor is open (toolbar shows live W x H inputs).
+ *
+ * Position: to the left of the scissors button (which sits at
+ * right:6px, width 28px → ends at right:34px). We sit the badge at
+ * right:42px so there is an 8px gap to the scissors button. This
+ * position is also clear of the reset button (right:40px, only
+ * visible when the editor is open — but the badge is hidden then
+ * anyway, so no overlap). */
+.zyf-crop-dims {
+    position: absolute;
+    top: 5px;
+    right: 40px;
+    z-index: 151;
+    height: 22px;
+    min-height: 22px;
+    padding: 0 8px;
+    display: inline-flex;
+    align-items: center;
+    background: rgba(10, 14, 20, 0.65);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: Tahoma, sans-serif;
+    letter-spacing: 0.3px;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+.zyf-crop-toolbar .zyf-crop-ar {
+    background: #1a2030;
+    color: #e6e8ec;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 3px;
+    font-size: 10px;
+    line-height: 1;
+    height: 18px;
+    padding: 0 3px;
+    cursor: pointer;
+    outline: none;
+    flex-shrink: 0;
+}
+
+.zyf-crop-toolbar .zyf-crop-dim {
+    width: 38px;
+    min-width: 38px;
+    background: rgba(0, 0, 0, 0.4);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 3px;
+    font-size: 10px;
+    line-height: 1;
+    height: 18px;
+    text-align: center;
+    padding: 0;
+    outline: none;
+    font-family: Tahoma, sans-serif;
+    font-weight: 600;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.zyf-crop-toolbar .zyf-crop-dim:focus {
+    border-color: rgba(56, 189, 248, 0.9);
+    background: rgba(56, 189, 248, 0.1);
+}
+
+.zyf-crop-toolbar .zyf-crop-x {
+    color: #888;
+    font-size: 10px;
+    line-height: 1;
+    font-weight: bold;
+    padding: 0 1px;
+    flex-shrink: 0;
+}
+
+.zyf-crop-overlay {
+    position: absolute;
+    border: 2px dashed #38bdf8;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+    z-index: 150;
+    pointer-events: auto;
+    cursor: move;
+    box-sizing: border-box;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* "Preview" mode: editor is closed but there is a saved crop, so
+ * the box is still rendered with the dashed 4-sided outline to
+ * remind the user where the crop region is. All interactive
+ * children (8 handles, 4 gridlines) are hidden, the box itself
+ * is non-interactive (pointer-events: none) so the rest of the
+ * video preview (play/pause, audio, etc.) can still be clicked,
+ * and the box-shadow darkening is dropped so the cropped-out
+ * area is not dimmed (the dark mask is only useful while the
+ * user is actively adjusting the box).
+ */
+.zyf-crop-overlay.zyf-crop-overlay--preview {
+    pointer-events: none;
+    cursor: default;
+    box-shadow: none;
+    border-color: rgba(56, 189, 248, 0.85);
+    border-width: 1.5px;
+}
+
+.zyf-crop-overlay.zyf-crop-overlay--preview .zyf-crop-handle,
+.zyf-crop-overlay.zyf-crop-overlay--preview .zyf-crop-gridline {
+    display: none;
+}
+
+.zyf-crop-gridline {
+    position: absolute;
+    pointer-events: none;
+    border-color: rgba(255, 255, 255, 0.3);
+    border-style: dashed;
+}
+
+.zyf-crop-gridline-v {
+    top: 0;
+    bottom: 0;
+    border-left-width: 1px;
+}
+
+.zyf-crop-gridline-h {
+    left: 0;
+    right: 0;
+    border-top-width: 1px;
+}
+
+.zyf-crop-handle {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    pointer-events: auto;
+    box-sizing: border-box;
+    z-index: 2;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.zyf-crop-handle[data-handle="tm"],
+.zyf-crop-handle[data-handle="bm"] {
+    width: 24px;
+    height: 12px;
+}
+
+.zyf-crop-handle[data-handle="lm"],
+.zyf-crop-handle[data-handle="rm"] {
+    width: 12px;
+    height: 24px;
+}
+
+/* Corner handles use a darker filled inner-corner (added via inline
+ * boxShadow in videoPlayer.js) to make the grab target obvious. */
+.zyf-crop-handle[data-handle="tl"],
+.zyf-crop-handle[data-handle="tr"],
+.zyf-crop-handle[data-handle="bl"],
+.zyf-crop-handle[data-handle="br"] {
+    /* Slight outer glow so the corner stands out even on dark
+     * video frames. Box-shadow is set inline (inset) for the fill;
+     * the outer drop-shadow here is additive. */
+    filter: drop-shadow(0 0 1px rgba(2, 132, 199, 0.6));
+}
+
+/* Edge handles (top/bottom/left/right midpoints) get a soft outer
+ * glow so the filled bar stays clearly visible against the video
+ * even when the video is dark. The fill itself is rendered via
+ * inline box-shadow in videoPlayer.js. */
+.zyf-crop-handle-edge {
+    filter: drop-shadow(0 0 1px rgba(2, 132, 199, 0.55));
+}
+
+.zyf-crop-handle:hover {
+    background: rgba(2, 132, 199, 0.25);
+    filter: drop-shadow(0 0 2px rgba(2, 132, 199, 0.8));
+}
+
+.zyf-crop-handle:active {
+    background: rgba(2, 132, 199, 0.4);
+}
+
+/* Bottom-right floating audio control for the video preview.
+ * Visual model (matches ComfyUI asset-browser pattern):
+ *   - Default: a small speaker icon, no panel background, slider hidden.
+ *   - Active (hover / focus / click): a rounded panel slides out to
+ *     the left and a volume slider expands inside it. Click-and-drag
+ *     on the slider is supported.
+ *   - Inactive: collapses back to the small icon.
+ * The container element is always mounted at full size so the mouse
+ * can travel from the button to the slider without losing hover.
+ * The panel background and slider visibility are toggled with
+ * `.zyf-audio-active` on the container.
+ *
+ * Layout is [slider | button] inside the panel; the panel sits
+ * inside the wrapper which provides the hit area. The wrapper has
+ * no background — only the panel does, and only when active. */
+.zyf-audio-control {
+    /* Positioned at the bottom-right of the video preview. The
+     * wrapper has no visible chrome — only the panel does, and
+     * only when active. The wrapper itself is the hit zone and
+     * is always mounted so the user can drag from button to
+     * slider without losing the hover state. */
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    z-index: 9999;
+    pointer-events: auto;
+    color: #e6e8ec;
+    font-size: 12px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.zyf-audio-control .zyf-audio-panel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    border-radius: 16px;
+    /* Default: no background — only the icon is visible. */
+    background: transparent;
+    box-shadow: none;
+    transition: background-color 0.12s ease-in, box-shadow 0.12s ease-in;
+}
+
+.zyf-audio-control.zyf-audio-active .zyf-audio-panel {
+    background: rgba(20, 26, 32, 0.78);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+
+.zyf-audio-control .zyf-audio-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: background-color 0.1s ease-in;
+}
+
+.zyf-audio-control.zyf-audio-active .zyf-audio-toggle:hover,
+.zyf-audio-control.zyf-audio-active .zyf-audio-toggle:focus-visible {
+    background: rgba(255, 255, 255, 0.1);
+    outline: none;
+}
+
+/* When the panel is not active the speaker button has no hover
+ * state of its own — it just sits there, the user can still click
+ * it (which will activate the panel + toggle mute). */
+.zyf-audio-control:not(.zyf-audio-active) .zyf-audio-toggle {
+    background: transparent;
+}
+
+.zyf-audio-control .zyf-audio-toggle svg {
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+    display: block;
+}
+
+/* Default state: speaker icon visible, muted icon hidden. */
+.zyf-audio-control .zyf-audio-toggle .zyf-audio-icon-muted {
+    display: none;
+}
+.zyf-audio-control .zyf-audio-toggle .zyf-audio-icon-speaker {
+    display: inline-block;
+}
+
+.zyf-audio-control .zyf-audio-toggle.zyf-audio-muted .zyf-audio-icon-speaker {
+    display: none;
+}
+.zyf-audio-control .zyf-audio-toggle.zyf-audio-muted .zyf-audio-icon-muted {
+    display: inline-block;
+}
+
+.zyf-audio-control .zyf-audio-volume-slider {
+    /* Slider is always present in the DOM (no remounting) so the
+     * mouse can travel to it smoothly. The width / opacity are
+     * toggled by the `.zyf-audio-active` class. */
+    width: 0;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+    flex-shrink: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    cursor: pointer;
+    /* Give the slider element vertical padding so the clickable
+     * hit area is larger than the 3px visual track. The track
+     * itself stays thin, but the user can click anywhere within
+     * the 18px-tall element to start dragging. */
+    height: 18px;
+    box-sizing: border-box;
+    transition: width 0.14s ease-in, opacity 0.14s ease-in, margin 0.14s ease-in;
+}
+
+.zyf-audio-control.zyf-audio-active .zyf-audio-volume-slider {
+    width: 80px;
+    min-width: 60px;
+    opacity: 1;
+    margin: 0 2px;
+}
+
+.zyf-audio-control .zyf-audio-volume-slider::-webkit-slider-runnable-track {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.zyf-audio-control .zyf-audio-volume-slider::-moz-range-track {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.zyf-audio-control .zyf-audio-volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #e6e8ec;
+    border: none;
+    margin-top: -5px;
+    cursor: pointer;
+}
+
+.zyf-audio-control .zyf-audio-volume-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #e6e8ec;
+    border: none;
+    cursor: pointer;
+}
+
+.zyf-timeline {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 0;
+    margin-bottom: 0;
+}
+
+.zyf-timeline-track {
+    position: relative;
+    height: 20px;
+    margin: 0;
+    background: #5c6672;
+    border-radius: 3px;
+    overflow: hidden;
+    user-select: none;
+    touch-action: none;
+    width: 100%;
+}
+
+.zyf-timeline-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #e2e6ec;
+    pointer-events: none;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+}
+
+/* 2026-07-21: F/T 数字标签使用等宽字体 + 字间距，避免 1 位数和 2 位数
+   切换时整行宽度变化导致进度条上的数字"跳动"。 */
+.zyf-timeline-label-frame,
+.zyf-timeline-label-time {
+    font-family: "Menlo", "Consolas", "SF Mono", "Liberation Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+    white-space: pre;
+}
+
+/* The middle "·" separator between the F and T sections of the
+   timeline label. Intentionally slightly larger and pure black to
+   read as a clear visual divider against the otherwise light-gray
+   label text. The `vertical-align` + `line-height: 1` keeps the
+   larger glyph vertically centered on the baseline of the surrounding
+   12px text instead of floating above it. */
+.zyf-timeline-label-sep {
+    color: #000;
+    font-size: 15px;
+    line-height: 1;
+    font-weight: 700;
+    margin: 0 8px;
+    vertical-align: middle;
+    /* Drop the inherited text-shadow — black-on-dark would otherwise
+       be unreadable; the dot is high-contrast enough without it. */
+    text-shadow: none;
+}
+
+.zyf-timeline-pre {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0%;
+    background: #99b8aa;
+}
+
+.zyf-timeline-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0%;
+    background: #5f7b91;
+}
+
+.zyf-timeline-post {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0%;
+    background: #ba6c6a;
+}
+
+.zyf-timeline-marker {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 2px;
+    transform: translateX(-1px);
+    pointer-events: none;
+}
+
+.zyf-timeline-marker-current {
+    background: #aa9;
+}
+
+.zyf-timeline-marker-in {
+    background: #16c172;
+}
+
+.zyf-timeline-marker-out {
+    background: #c12926;
+}
+
+/* =========================================================================
+ * zyf保存视频 - placeholders / progress bar tweaks
+ * =========================================================================
+ * The saver reuses the timeline DOM from the Frame Selector, so the
+ * rules above cover the visual styling. We only add the small extras
+ * needed by the saver: a centered "等待执行..." placeholder inside the
+ * video preview area, and a slightly subdued progress bar that has no
+ * in/out markers (everything is one continuous range).
+ */
+.zyf-saver-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(220, 230, 240, 0.85);
+    font-size: 13px;
+    font-family: Tahoma, "Microsoft YaHei", sans-serif;
+    background: #000;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: none;
+    z-index: 8;
+    letter-spacing: 0.4px;
+}
+
+/* Play/pause click overlay for the zyf保存视频. <video> with
+ * controls=false does not respond to clicks on its own, so this
+ * transparent layer captures clicks and toggles playback. z-index
+ * is below the audio control (9999) so the speaker / slider
+ * remain clickable, and above the placeholder (8) so the
+ * placeholder is not the click target. */
+.zyf-saver-playpause-overlay {
+    /* All visual styling is inline on the element so we keep this
+     * selector purely as a marker class for future overrides. */
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.zyf-saver-progress .zyf-timeline-track {
+    /* The saver's progress bar is read-only / no in-out markers, so the
+     * track gets a slightly darker base color to differentiate it from
+     * the Frame Selector's editable timeline. */
+    background: #4a5360;
+}
+
+.zyf-saver-progress .zyf-timeline-fill {
+    /* Single continuous fill (no pre / post segments because there are
+     * no in/out points). */
+    background: #5f7b91;
+}
+
+/* =========================================================================
+ * Screenshot button — top-left of the video preview.
+ * Scissors/cut line icon (top bar + crossed X + bottom handle circles).
+ * Transparent by default; hover / focus states show a solid dark-gray
+ * background. The icon is a white-stroked SVG so it shows on the dark
+ * video frame. Hidden when the crop editor is open so it doesn't
+ * overlap with the crop toolbar.
+ * ========================================================================= */
+.zyf-screenshot-btn {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    z-index: 110;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    padding: 0;
+    background: transparent;
+    color: #e6e8ec;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.15s, border-color 0.15s;
+    box-sizing: border-box;
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zyf-screenshot-btn .zyf-screenshot-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+}
+
+.zyf-screenshot-btn .zyf-screenshot-btn-icon svg {
+    width: 16px;
+    height: 16px;
+    stroke: #ffffff;
+    stroke-width: 1.8;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    display: block;
+}
+
+.zyf-screenshot-btn:hover {
+    background: rgba(10, 14, 20, 0.85);
+    border-color: rgba(56, 189, 248, 0.8);
+}
+
+.zyf-screenshot-btn:focus {
+    outline: none;
+    background: rgba(10, 14, 20, 0.85);
+    border-color: rgba(56, 189, 248, 0.8);
+}
+
+.zyf-screenshot-btn:active {
+    background: rgba(56, 189, 248, 0.9);
+    border-color: rgba(56, 189, 248, 1);
+}
+
+/* "已截图" feedback flash — briefly shows a green border on success */
+.zyf-screenshot-btn.zyf-screenshot-btn--success {
+    border-color: rgba(74, 222, 128, 0.9);
+    background: rgba(10, 14, 20, 0.85);
+}
+
+.zyf-screenshot-btn.zyf-screenshot-btn--success .zyf-screenshot-btn-icon svg {
+    stroke: #4ade80;
+}
+
+/* ===== Top toolbar (folder upload + collapse/expand) =====
+ * Compact row at the very top of the node: folder icon on the left
+ * for video upload, chevron on the right for collapsing/expanding
+ * all parameter widgets (except start/end frame which stay visible). */
+.zyf-top-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    width: 100%;
+    padding: 1px 2px;
+    box-sizing: border-box;
+    min-height: 0;
+}
+
+.zyf-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 20px;
+    min-width: 22px;
+    min-height: 20px;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    color: #8a8f98;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    box-sizing: border-box;
+    pointer-events: auto;
+}
+
+.zyf-toolbar-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    display: block;
+}
+
+.zyf-toolbar-btn:hover {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.4);
+    color: #c8d0dc;
+}
+
+.zyf-toolbar-btn:focus {
+    outline: none;
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.5);
+}
+
+.zyf-toolbar-btn.active {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: rgba(56, 189, 248, 0.6);
+    color: #38bdf8;
+}
