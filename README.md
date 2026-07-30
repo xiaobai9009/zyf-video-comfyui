@@ -276,6 +276,7 @@ A: 检查控制台日志中各段帧数信息。系统保证帧数守恒（总�
 源代码界面主要基于以下优秀项目:
 
 - [ComfyUI-LNL](https://github.com/dunklehohle/ComfyUI-LNL) (GNU)
+- 
 部分代码参考了以下优秀项目：
 
 - [ComfyUI-VideoHelperSuite](https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite) (GPL-3.0)
