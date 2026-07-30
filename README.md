@@ -275,3 +275,5 @@ A: 检查控制台日志中各段帧数信息。系统保证帧数守恒（总�
 部分代码参考了以下优秀项目：
 - [ComfyUI-VideoHelperSuite](https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite) (GPL-3.0)
 - [ComfyUI-Custom-Scripts](https://github.com/pythongosssss/ComfyUI-Custom-Scripts) (MIT)
+- [ComfyUI-LNL](https://github.com/dunklehohle/ComfyUI-LNL) (GNU)
+- [WhatDreamsCost-ComfyUI](https://github.com/WhatDreamsCost/WhatDreamsCost-ComfyUI)
